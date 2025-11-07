@@ -22,6 +22,12 @@ minecraft {
 
 repositories {
     mavenCentral()
+    maven {
+        url 'https://repo.lucko.me/'
+        content {
+            includeGroup 'net.luckperms'
+        }
+    }
 }
 
 dependencies {
