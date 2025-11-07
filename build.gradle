@@ -25,7 +25,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly files('C:/Users/raehr/Documents/Hellas/HellasControl/build/libs/hellascontrol-1.0.0.jar')
+    compileOnly files('libs/hellascontrol-1.0.0.jar')
     minecraft 'net.minecraftforge:forge:1.16.5-36.2.42'
 }
 
