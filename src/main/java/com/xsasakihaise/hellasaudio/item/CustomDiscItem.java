@@ -33,6 +33,9 @@ public class CustomDiscItem extends Item {
         super(properties);
     }
 
+    /**
+     * Attempts to trigger playback on right click when the server has the requested recording stored.
+     */
     @Override
     public ActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand) {
         ItemStack stack = player.getItemInHand(hand);
@@ -49,6 +52,9 @@ public class CustomDiscItem extends Item {
         return ActionResult.sidedSuccess(stack, world.isClientSide);
     }
 
+    /**
+     * Shows the configured song name (if any) in gold so discs stand out from vanilla items.
+     */
     @Override
     public ITextComponent getName(ItemStack stack) {
         String displayName = getDisplayName(stack);
@@ -62,6 +68,9 @@ public class CustomDiscItem extends Item {
         return super.getName(stack);
     }
 
+    /**
+     * Adds extra tooltip information so players can differentiate discs even if their inventory icons are identical.
+     */
     @Override
     @OnlyIn(Dist.CLIENT)
     public void appendHoverText(ItemStack stack, @Nullable World world, List<ITextComponent> tooltip, ITooltipFlag flag) {
@@ -76,6 +85,10 @@ public class CustomDiscItem extends Item {
         super.appendHoverText(stack, world, tooltip, flag);
     }
 
+    /**
+     * Builds a single-use custom disc item with pre-populated metadata tags. This is primarily used by server commands
+     * when staff grant discs to players.
+     */
     public static ItemStack createForDisc(String discId, String displayName) {
         ItemStack stack = new ItemStack(ModItems.CUSTOM_DISC.get());
         stack.getOrCreateTag().putString(DISC_ID_TAG, discId);
@@ -88,6 +101,9 @@ public class CustomDiscItem extends Item {
         return stack;
     }
 
+    /**
+     * @return disc identifier embedded in the item's NBT or {@code null} if missing.
+     */
     @Nullable
     public static String getDiscId(ItemStack stack) {
         if (stack.hasTag() && stack.getTag() != null && stack.getTag().contains(DISC_ID_TAG)) {
@@ -96,6 +112,9 @@ public class CustomDiscItem extends Item {
         return null;
     }
 
+    /**
+     * @return player-facing song name stored inside the item's NBT or {@code null} when unnamed.
+     */
     @Nullable
     public static String getDisplayName(ItemStack stack) {
         if (stack.hasTag() && stack.getTag() != null && stack.getTag().contains(DISC_NAME_TAG)) {

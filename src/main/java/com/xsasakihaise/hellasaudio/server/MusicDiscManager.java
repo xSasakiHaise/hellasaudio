@@ -57,10 +57,17 @@ public final class MusicDiscManager {
     private MusicDiscManager() {
     }
 
+    /**
+     * @return singleton instance responsible for managing disc metadata and files.
+     */
     public static MusicDiscManager getInstance() {
         return INSTANCE;
     }
 
+    /**
+     * Ensures the base HellasAudio directory exists prior to server start. This avoids late directory creation warnings
+     * once uploads begin streaming in.
+     */
     public static void prepareGlobalStorage() {
         try {
             Files.createDirectories(FMLPaths.GAMEDIR.get().resolve(HellasAudio.MOD_ID));
@@ -71,6 +78,7 @@ public final class MusicDiscManager {
 
     @SubscribeEvent
     public static void handleServerStarting(FMLServerStartingEvent event) {
+        // Capture the live server reference and load metadata as soon as possible so commands are ready at spawn.
         INSTANCE.server = event.getServer();
         INSTANCE.setupStorage();
         INSTANCE.loadMetadata();
@@ -78,6 +86,7 @@ public final class MusicDiscManager {
 
     @SubscribeEvent
     public static void handleServerStopping(FMLServerStoppingEvent event) {
+        // Persist the final state before the server fully tears down.
         INSTANCE.persistMetadata();
         INSTANCE.server = null;
         INSTANCE.discs.clear();
@@ -94,6 +103,10 @@ public final class MusicDiscManager {
         metadataFile = storageRoot.resolve(METADATA_FILE);
     }
 
+    /**
+     * Reads the persisted JSON file from disk and reconstructs in-memory metadata entries. Missing files simply result
+     * in an empty library.
+     */
     private void loadMetadata() {
         discs.clear();
         if (metadataFile == null || !Files.exists(metadataFile)) {
@@ -121,6 +134,9 @@ public final class MusicDiscManager {
         }
     }
 
+    /**
+     * Serializes the current metadata collection to disk so server restarts retain player uploads.
+     */
     private void persistMetadata() {
         if (metadataFile == null) {
             return;
@@ -146,22 +162,34 @@ public final class MusicDiscManager {
         }
     }
 
+    /**
+     * @return read-only collection of discs sorted by display name for presentation in commands or GUIs.
+     */
     public Collection<DiscMetadata> getAllDiscs() {
         ArrayList<DiscMetadata> metadata = new ArrayList<>(discs.values());
         metadata.sort(Comparator.comparing(DiscMetadata::getDisplayName, String.CASE_INSENSITIVE_ORDER));
         return Collections.unmodifiableCollection(metadata);
     }
 
+    /**
+     * @return read-only collection of known disc identifiers sorted alphabetically.
+     */
     public Collection<String> getKnownDiscIds() {
         ArrayList<String> ids = new ArrayList<>(discs.keySet());
         ids.sort(String.CASE_INSENSITIVE_ORDER);
         return Collections.unmodifiableCollection(ids);
     }
 
+    /**
+     * Looks up metadata for a specific disc.
+     */
     public Optional<DiscMetadata> getMetadata(String discId) {
         return Optional.ofNullable(discs.get(discId));
     }
 
+    /**
+     * Builds an item stack representing the requested disc so staff can hand it out through commands.
+     */
     public ItemStack createDiscItem(String discId) {
         DiscMetadata metadata = discs.get(discId);
         if (metadata == null) {
@@ -170,6 +198,10 @@ public final class MusicDiscManager {
         return CustomDiscItem.createForDisc(discId, metadata.getDisplayName());
     }
 
+    /**
+     * Performs the validation and file write for a client upload request. Players receive descriptive feedback when a
+     * rule prevents their upload.
+     */
     public void handleUpload(ServerPlayerEntity player, String discId, byte[] data) {
         if (storageRoot == null) {
             player.sendMessage(new StringTextComponent("Server is not ready to handle uploads."), Util.NIL_UUID);
@@ -216,6 +248,10 @@ public final class MusicDiscManager {
         }
     }
 
+    /**
+     * Broadcasts a disc to either the provided targets or the entire server if the collection is {@code null} or empty.
+     * The file is streamed into a {@link DiscPlaybackMessage} for each listener.
+     */
     public void playDisc(CommandSource source, String discId, @Nullable Collection<ServerPlayerEntity> targets) {
         DiscMetadata metadata = discs.get(discId);
         if (metadata == null) {
@@ -252,6 +288,9 @@ public final class MusicDiscManager {
         }
     }
 
+    /**
+     * Updates the friendly display name for a disc.
+     */
     public boolean renameDisc(String discId, String newDisplayName) {
         DiscMetadata existing = discs.get(discId);
         if (existing == null) {
@@ -268,6 +307,9 @@ public final class MusicDiscManager {
         return true;
     }
 
+    /**
+     * Deletes both metadata and the stored MP3 file, if present.
+     */
     public boolean removeDisc(String discId) {
         DiscMetadata metadata = discs.remove(discId);
         if (metadata == null) {
@@ -356,6 +398,9 @@ public final class MusicDiscManager {
         return b0 == 0xFF && b1 == 0xE0;
     }
 
+    /**
+     * Immutable snapshot of a disc entry that records the uploader and creation time alongside display data.
+     */
     public static final class DiscMetadata {
         private final String discId;
         private final String displayName;
@@ -369,18 +414,30 @@ public final class MusicDiscManager {
             this.uploadedAt = uploadedAt;
         }
 
+        /**
+         * @return globally unique identifier players refer to when requesting playback.
+         */
         public String getDiscId() {
             return discId;
         }
 
+        /**
+         * @return player-facing name shown in tooltips and command listings.
+         */
         public String getDisplayName() {
             return displayName;
         }
 
+        /**
+         * @return UUID of the player who uploaded the disc.
+         */
         public UUID getUploader() {
             return uploader;
         }
 
+        /**
+         * @return timestamp marking when the file was stored on the server.
+         */
         public Instant getUploadedAt() {
             return uploadedAt;
         }

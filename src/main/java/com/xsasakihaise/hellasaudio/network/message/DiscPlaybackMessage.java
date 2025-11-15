@@ -18,12 +18,18 @@ public class DiscPlaybackMessage {
         this.payload = payload;
     }
 
+    /**
+     * Serializes the playback identifier and bytes into the buffer so clients can reconstruct a cache file.
+     */
     public static void encode(DiscPlaybackMessage message, PacketBuffer buffer) {
         buffer.writeUtf(message.discId, 64);
         buffer.writeVarInt(message.payload.length);
         buffer.writeByteArray(message.payload);
     }
 
+    /**
+     * Creates a new message from the raw network buffer sent by the server.
+     */
     public static DiscPlaybackMessage decode(PacketBuffer buffer) {
         String discId = buffer.readUtf(64);
         int length = buffer.readVarInt();
@@ -31,6 +37,9 @@ public class DiscPlaybackMessage {
         return new DiscPlaybackMessage(discId, payload);
     }
 
+    /**
+     * Handles the playback command by deferring to the {@link HellasAudioClient} singleton on the render thread.
+     */
     public static void handle(DiscPlaybackMessage message, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> HellasAudioClient.handleServerPlayback(message.discId, message.payload));

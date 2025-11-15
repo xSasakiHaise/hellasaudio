@@ -14,6 +14,9 @@ public final class ServerEventHandler {
     private ServerEventHandler() {
     }
 
+    /**
+     * Registers HellasAudio's Brigadier command tree during the standard Forge callback.
+     */
     @SubscribeEvent
     public static void onRegisterCommands(RegisterCommandsEvent event) {
         MusicDiscCommands.register(event.getDispatcher());

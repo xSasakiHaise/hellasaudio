@@ -20,6 +20,10 @@ public final class ModItems {
     private ModItems() {
     }
 
+    /**
+     * Hooks the mod's deferred register into the provided event bus. Must be called during mod construction to ensure
+     * discs appear in the registry at the correct time.
+     */
     public static void register(IEventBus eventBus) {
         ITEMS.register(eventBus);
     }

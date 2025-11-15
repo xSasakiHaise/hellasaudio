@@ -26,6 +26,10 @@ public class HellasAudio {
     public static final Logger LOGGER = LogManager.getLogger();
     public static final int MAX_DISC_SIZE_BYTES = 50 * 1024 * 1024; // 50 MiB hard limit for uploads
 
+    /**
+     * Registers lifecycle listeners and kicks off shared registries. Forge invokes this constructor exactly once when
+     * the mod is loaded, making it a good place to wire common callbacks.
+     */
     public HellasAudio() {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         modEventBus.addListener(this::onCommonSetup);
@@ -37,6 +41,10 @@ public class HellasAudio {
         LOGGER.info("HellasAudio mod initialized.");
     }
 
+    /**
+     * Performs server-agnostic initialization such as entitlement checks and network setup. The heavy lifting is
+     * deferred to {@link FMLCommonSetupEvent#enqueueWork(Runnable)} so that registries stay thread-safe.
+     */
     private void onCommonSetup(final FMLCommonSetupEvent event) {
         CoreCheck.verifyCoreLoaded();
 
@@ -55,6 +63,9 @@ public class HellasAudio {
         });
     }
 
+    /**
+     * Creates any required directories and client-side helpers before the player reaches the main menu.
+     */
     private void onClientSetup(final FMLClientSetupEvent event) {
         event.enqueueWork(HellasAudioClient::initializeClient);
     }

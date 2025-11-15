@@ -24,6 +24,10 @@ public final class ClientCommandHandler {
     private ClientCommandHandler() {
     }
 
+    /**
+     * Intercepts the player's outgoing chat before it reaches the server so "/hellas audio upload" invocations can be
+     * converted into a silent file upload instead of a visible chat command.
+     */
     @SubscribeEvent
     public static void onClientChat(ClientChatEvent event) {
         String message = event.getMessage();
@@ -58,6 +62,9 @@ public final class ClientCommandHandler {
         }
     }
 
+    /**
+     * Parses the literal chat message, returning {@code null} when it is not a HellasAudio upload attempt.
+     */
     @Nullable
     private static UploadInvocation parseUploadInvocation(@Nullable String rawMessage) {
         if (rawMessage == null) {
@@ -84,6 +91,10 @@ public final class ClientCommandHandler {
         return null;
     }
 
+    /**
+     * Extracts the disc identifier and path portion from the upload command. This intentionally keeps the parsing rules
+     * loose so that relative paths containing spaces continue to work.
+     */
     private static UploadInvocation extractArguments(String argumentSection) {
         if (argumentSection.isEmpty()) {
             return new UploadInvocation("", "");
