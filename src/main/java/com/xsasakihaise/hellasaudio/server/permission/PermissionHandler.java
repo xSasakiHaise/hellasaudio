@@ -24,10 +24,18 @@ public final class PermissionHandler {
     private PermissionHandler() {
     }
 
+    /**
+     * Checks if the player can upload discs either by being a high-enough operator or by having the dedicated
+     * LuckPerms node.
+     */
     public static boolean canUpload(ServerPlayerEntity player) {
         return player.hasPermissions(OP_UPLOAD_LEVEL) || hasLuckPermsPermission(player, UPLOAD_PERMISSION);
     }
 
+    /**
+     * Utility invoked from Brigadier builders to grant access to subcommands. When LuckPerms is absent we fall back to
+     * vanilla permission levels so standalone servers still function.
+     */
     public static boolean hasCommandPermission(CommandSource source, String node, int fallbackLevel) {
         if (source.hasPermission(fallbackLevel)) {
             return true;
@@ -40,6 +48,9 @@ public final class PermissionHandler {
         return hasLuckPermsPermission((ServerPlayerEntity) source.getEntity(), node);
     }
 
+    /**
+     * Reflectively checks LuckPerms (when present) so the mod does not have a hard dependency on it at compile time.
+     */
     private static boolean hasLuckPermsPermission(ServerPlayerEntity player, String node) {
         if (!ModList.get().isLoaded("luckperms")) {
             return false;

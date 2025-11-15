@@ -25,6 +25,10 @@ public final class NetworkHandler {
     private NetworkHandler() {
     }
 
+    /**
+     * Registers all packet types that the mod uses. Needs to be invoked during common setup before any packets are
+     * transmitted.
+     */
     public static void init() {
         if (initialized) {
             return;
@@ -36,20 +40,33 @@ public final class NetworkHandler {
         initialized = true;
     }
 
+    /**
+     * Convenience wrapper for pushing messages to the logical server.
+     */
     public static void sendToServer(Object message) {
         CHANNEL.sendToServer(message);
     }
 
+    /**
+     * Sends a packet to a single player. Used for targeted playback requests.
+     */
     public static void sendToPlayer(Object message, ServerPlayerEntity player) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), message);
     }
 
+    /**
+     * Iterates over the provided collection and sends the packet to each player individually. Forge's higher-level
+     * packet distributors do not support arbitrary subsets, so we keep this helper dedicated to our use case.
+     */
     public static void broadcastToPlayers(Object message, Iterable<ServerPlayerEntity> players) {
         for (ServerPlayerEntity player : players) {
             sendToPlayer(message, player);
         }
     }
 
+    /**
+     * @return the configured SimpleChannel for advanced integrations.
+     */
     public static SimpleChannel getChannel() {
         return CHANNEL;
     }

@@ -27,12 +27,19 @@ public class DiscUploadMessage {
         return payload;
     }
 
+    /**
+     * Serializes the message into the binary packet buffer. The payload can be relatively large so we always prefix it
+     * with a length field to guard against buffer under-reads.
+     */
     public static void encode(DiscUploadMessage message, PacketBuffer buffer) {
         buffer.writeUtf(message.discId, 64);
         buffer.writeVarInt(message.payload.length);
         buffer.writeByteArray(message.payload);
     }
 
+    /**
+     * Deserializes packet data received from the network into an immutable message instance.
+     */
     public static DiscUploadMessage decode(PacketBuffer buffer) {
         String discId = buffer.readUtf(64);
         int length = buffer.readVarInt();
@@ -40,6 +47,10 @@ public class DiscUploadMessage {
         return new DiscUploadMessage(discId, payload);
     }
 
+    /**
+     * Invoked on the server after the client sends an upload request. The heavy processing is delegated to
+     * {@link MusicDiscManager} so permissions and storage live in a single location.
+     */
     public static void handle(DiscUploadMessage message, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         ServerPlayerEntity sender = context.getSender();

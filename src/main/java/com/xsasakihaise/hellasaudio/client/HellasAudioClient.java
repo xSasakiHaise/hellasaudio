@@ -32,6 +32,9 @@ public final class HellasAudioClient {
     private HellasAudioClient() {
     }
 
+    /**
+     * Creates the upload/cache folders under the player's game directory so manual file placement always succeeds.
+     */
     public static void initializeClient() {
         try {
             Files.createDirectories(CLIENT_UPLOAD_ROOT);
@@ -41,6 +44,13 @@ public final class HellasAudioClient {
         }
     }
 
+    /**
+     * Validates the provided file and streams it to the server through the custom network channel.
+     *
+     * @param discId       logical identifier that the server will store the file under
+     * @param pathArgument absolute or relative path that should resolve to an MP3 file
+     * @throws CommandSyntaxException if the call happens when the player is not connected to a server
+     */
     public static void uploadDiscFromClient(String discId, String pathArgument) throws CommandSyntaxException {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.getConnection() == null || minecraft.player == null) {
@@ -74,6 +84,12 @@ public final class HellasAudioClient {
         }
     }
 
+    /**
+     * Caches the payload that arrived from the server and notifies the player that the disc is ready for playback.
+     *
+     * @param discId identifier that ties the cached file back to {@link com.xsasakihaise.hellasaudio.item.CustomDiscItem}
+     * @param payload MP3 bytes streamed from the server
+     */
     public static void handleServerPlayback(String discId, byte[] payload) {
         Minecraft minecraft = Minecraft.getInstance();
         try {
@@ -92,10 +108,17 @@ public final class HellasAudioClient {
         }
     }
 
+    /**
+     * @return directory players should drop MP3 files into for convenient command usage.
+     */
     public static Path getClientUploadRoot() {
         return CLIENT_UPLOAD_ROOT;
     }
 
+    /**
+     * Resolves a command argument into a usable path while keeping everything inside the dedicated upload directory by
+     * default. Absolute paths are respected so power users can source files from elsewhere.
+     */
     private static Path resolveUploadPath(String argument) {
         Path provided = Paths.get(argument);
         if (!provided.isAbsolute()) {

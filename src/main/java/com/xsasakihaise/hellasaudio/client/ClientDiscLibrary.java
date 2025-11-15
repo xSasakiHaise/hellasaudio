@@ -25,10 +25,17 @@ public final class ClientDiscLibrary {
     private ClientDiscLibrary() {
     }
 
+    /**
+     * @return singleton reference used across all client handlers.
+     */
     public static ClientDiscLibrary getInstance() {
         return INSTANCE;
     }
 
+    /**
+     * Stores the latest MP3 path for a disc identifier and notifies the player that an external audio system can now
+     * consume it.
+     */
     public void queuePlayback(String discId, Path cachedFile) {
         cachedDiscs.put(discId, cachedFile);
         HellasAudio.LOGGER.info("Queued custom disc '{}' located at {}", discId, cachedFile);
@@ -41,6 +48,9 @@ public final class ClientDiscLibrary {
         // Hook into the external audio system if/when it becomes available.
     }
 
+    /**
+     * @return live view of cached discs keyed by disc id.
+     */
     public Map<String, Path> getCachedDiscs() {
         return cachedDiscs;
     }

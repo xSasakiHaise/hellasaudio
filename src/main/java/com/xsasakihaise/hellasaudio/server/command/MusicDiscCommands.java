@@ -34,6 +34,10 @@ public final class MusicDiscCommands {
     private MusicDiscCommands() {
     }
 
+    /**
+     * Entrypoint invoked by {@link com.xsasakihaise.hellasaudio.server.ServerEventHandler} to register the entire
+     * command tree under the root "/hellas" literal.
+     */
     public static void register(CommandDispatcher<CommandSource> dispatcher) {
         dispatcher.register(Commands.literal("hellas").then(createAudioLiteral()));
     }
@@ -44,6 +48,10 @@ public final class MusicDiscCommands {
         return audio;
     }
 
+    /**
+     * Adds all subcommands (upload, play, list, name, remove, give) to the provided literal. Splitting this out keeps
+     * the tree definition readable.
+     */
     private static void attachAudioCommands(LiteralArgumentBuilder<CommandSource> builder) {
         builder.then(Commands.literal("upload")
                 .executes(context -> {
