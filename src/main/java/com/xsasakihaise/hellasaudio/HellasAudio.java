@@ -31,6 +31,17 @@ public class HellasAudio {
      * the mod is loaded, making it a good place to wire common callbacks.
      */
     public HellasAudio() {
+        CoreCheck.verifyCoreLoaded();
+
+        if (FMLEnvironment.dist == Dist.DEDICATED_SERVER) {
+            CoreCheck.verifyEntitled("hellasaudio");
+        }
+
+        if (!ModList.get().isLoaded("hellascontrol")) {
+            LOGGER.warn("HellasControl not present; skipping HellasAudio registration due to licensing requirements.");
+            return;
+        }
+
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         modEventBus.addListener(this::onCommonSetup);
         modEventBus.addListener(this::onClientSetup);
@@ -46,14 +57,7 @@ public class HellasAudio {
      * deferred to {@link FMLCommonSetupEvent#enqueueWork(Runnable)} so that registries stay thread-safe.
      */
     private void onCommonSetup(final FMLCommonSetupEvent event) {
-        CoreCheck.verifyCoreLoaded();
-
-        if (FMLEnvironment.dist == Dist.DEDICATED_SERVER) {
-            CoreCheck.verifyEntitled("hellasaudio");
-        }
-
         if (!ModList.get().isLoaded("hellascontrol")) {
-            LOGGER.warn("HellasControl not present; skipping HellasAudio registration due to licensing requirements.");
             return;
         }
 

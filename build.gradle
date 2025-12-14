@@ -28,10 +28,16 @@ repositories {
             includeGroup 'net.luckperms'
         }
     }
+    maven {
+        url 'https://jitpack.io'
+        content {
+            includeGroup 'com.github.xSasakiHaise'
+        }
+    }
 }
 
 dependencies {
-    compileOnly files('libs/hellascontrol-2.0.0.jar')
+    compileOnly fg.deobf('com.github.xSasakiHaise:hellascontrol:2.0.0')
     minecraft 'net.minecraftforge:forge:1.16.5-36.2.42'
 }
 
