@@ -23,7 +23,10 @@ import org.apache.logging.log4j.Logger;
 @Mod(HellasAudio.MOD_ID)
 public class HellasAudio {
     public static final String MOD_ID = "hellasaudio";
-    public static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger("HellasAudio");
+    private static final String ENTITLEMENT_KEY = MOD_ID;
+    private static volatile boolean ENABLED = false;
+    private static volatile String DISABLE_REASON = "UNINITIALIZED";
     public static final int MAX_DISC_SIZE_BYTES = 50 * 1024 * 1024; // 50 MiB hard limit for uploads
 
     /**
@@ -31,22 +34,13 @@ public class HellasAudio {
      * the mod is loaded, making it a good place to wire common callbacks.
      */
     public HellasAudio() {
-        CoreCheck.verifyCoreLoaded();
-
-        if (FMLEnvironment.dist == Dist.DEDICATED_SERVER) {
-            CoreCheck.verifyEntitled("hellasaudio");
-        }
-
-        if (!ModList.get().isLoaded("hellascontrol")) {
-            LOGGER.warn("HellasControl not present; skipping HellasAudio registration due to licensing requirements.");
-            return;
-        }
-
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
         modEventBus.addListener(this::onCommonSetup);
         modEventBus.addListener(this::onClientSetup);
 
-        ModItems.register(modEventBus);
+        if (FMLEnvironment.dist != Dist.DEDICATED_SERVER || ModList.get().isLoaded("hellascontrol")) {
+            ModItems.register(modEventBus);
+        }
 
         MinecraftForge.EVENT_BUS.register(this);
         LOGGER.info("HellasAudio mod initialized.");
@@ -57,11 +51,11 @@ public class HellasAudio {
      * deferred to {@link FMLCommonSetupEvent#enqueueWork(Runnable)} so that registries stay thread-safe.
      */
     private void onCommonSetup(final FMLCommonSetupEvent event) {
-        if (!ModList.get().isLoaded("hellascontrol")) {
-            return;
-        }
-
         event.enqueueWork(() -> {
+            initGate();
+            if (!ENABLED) {
+                return;
+            }
             NetworkHandler.init();
             MusicDiscManager.prepareGlobalStorage();
         });
@@ -71,6 +65,36 @@ public class HellasAudio {
      * Creates any required directories and client-side helpers before the player reaches the main menu.
      */
     private void onClientSetup(final FMLClientSetupEvent event) {
+        if (!ENABLED) {
+            return;
+        }
         event.enqueueWork(HellasAudioClient::initializeClient);
+    }
+
+    private void initGate() {
+        if (FMLEnvironment.dist != Dist.DEDICATED_SERVER) {
+            ENABLED = true;
+            DISABLE_REASON = "OK (non-dedicated)";
+            return;
+        }
+
+        if (!ModList.get().isLoaded("hellascontrol")) {
+            ENABLED = false;
+            DISABLE_REASON = "HellasControl missing";
+            LOGGER.warn("[HellasAudio] disabled: {}", DISABLE_REASON);
+            return;
+        }
+
+        try {
+            CoreCheck.verifyCoreLoaded();
+            CoreCheck.verifyEntitled(ENTITLEMENT_KEY);
+            ENABLED = true;
+            DISABLE_REASON = "OK";
+            LOGGER.info("[HellasAudio] enabled (license OK) entitlement='{}'", ENTITLEMENT_KEY);
+        } catch (Exception e) {
+            ENABLED = false;
+            DISABLE_REASON = "License invalid";
+            LOGGER.warn("[HellasAudio] disabled: {} entitlement='{}'", DISABLE_REASON, ENTITLEMENT_KEY, e);
+        }
     }
 }
